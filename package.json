@@ -1,0 +1,22 @@
+{
+  "name": "fabricjs-playground",
+  "version": "1.0.0",
+  "main": "index.html",
+  "scripts": {
+    "start": "parcel index.html --open",
+    "build": "parcel build index.html",
+    "deploy": "npm run build && gh-pages -d dist"
+  },
+  "dependencies": {
+    "fabric": "^2.7.0",
+    "fabric-browseronly": "^2.7.0",
+    "xmldom": "^0.1.27"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@types/fabric": "^2.6.9",
+    "gh-pages": "^2.0.1",
+    "parcel-bundler": "^1.12.0",
+    "typescript": "^3.4.3"
+  }
+}
