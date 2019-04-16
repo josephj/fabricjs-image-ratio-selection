@@ -1,5 +1,3 @@
-import { Promise } from "q";
-
 export function getOrientation(file) {
   return new Promise(resolve => {
     var reader = new FileReader();
