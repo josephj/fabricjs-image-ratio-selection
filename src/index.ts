@@ -66,7 +66,6 @@ const handleImageLoad = dataURL => e => {
 
   fabric.Image.fromURL(dataURL, img => {
     img.set({
-      backgroundColor: "red",
       width: naturalWidth,
       height: naturalHeight,
       top,
@@ -78,31 +77,6 @@ const handleImageLoad = dataURL => e => {
     });
     canvas.add(img);
 
-    const rect = new fabric.Rect({
-      backgroundColor: "#000",
-      opacity: 0.5,
-      width: scaledWidth,
-      height: scaledHeight,
-      top,
-      left,
-      selectable: false
-    });
-    rect.lockMovementX = true;
-    rect.lockMovementY = true;
-    rect.moveCursor = "default";
-    rect.setControlsVisibility({
-      bl: false,
-      br: false,
-      mb: false,
-      ml: false,
-      mr: false,
-      mt: false,
-      tl: false,
-      tr: false,
-      mtr: false
-    });
-    canvas.add(rect);
-
     let selectionWidth = 0;
     let selectionHeight = 0;
     if (SIZE[1] * (scaledWidth / SIZE[0]) <= scaledHeight) {
@@ -113,6 +87,31 @@ const handleImageLoad = dataURL => e => {
       selectionHeight = scaledHeight;
     }
     if (selectionWidth !== scaledWidth || selectionHeight !== scaledHeight) {
+      const rect = new fabric.Rect({
+        backgroundColor: "#000",
+        opacity: 0.5,
+        width: scaledWidth,
+        height: scaledHeight,
+        top,
+        left,
+        selectable: false
+      });
+      rect.lockMovementX = true;
+      rect.lockMovementY = true;
+      rect.moveCursor = "default";
+      rect.setControlsVisibility({
+        bl: false,
+        br: false,
+        mb: false,
+        ml: false,
+        mr: false,
+        mt: false,
+        tl: false,
+        tr: false,
+        mtr: false
+      });
+      canvas.add(rect);
+
       const selection = new fabric.Rect({
         backgroundColor: "white",
         opacity: 0.5,
@@ -122,7 +121,7 @@ const handleImageLoad = dataURL => e => {
         left: left + (scaledWidth - selectionWidth) / 2,
         selectable: true,
         borderDashArray: [1, 2],
-        borderColor: "#fff",
+        borderColor: "rgba(255, 255, 255, 1)",
         lockMovementX: selectionWidth === scaledWidth,
         lockMovementY: selectionHeight === scaledHeight,
         lockUniScaling: true
