@@ -1,0 +1,33 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+canvas {
+  display: inline-block;
+  width: 500px;
+  height: 500px;
+}
+.canvas-container {
+  display: inline-block;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+h1,
+h2 {
+  margin: 0;
+  padding: 0;
+}
+form {
+  border: solid 1px #ccc;
+  display: block;
+  padding: 10px;
+}
+#container {
+  margin: 10px 0;
+}
+.box {
+  background: #ccc;
+  width: 500px;
+  height: 500px;
+  display: inline-block;
+  position: relative;
+}
