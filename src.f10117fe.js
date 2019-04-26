@@ -31971,7 +31971,7 @@ exports.needSelection = function (viewportInfo, printWidth, printHeight) {
 };
 
 exports.getViewportInfo = function (naturalWidth, naturalHeight, canvasSize) {
-  var isLandscape = naturalWidth > naturalHeight;
+  var isLandscape = naturalWidth >= naturalHeight;
   var ratio = isLandscape ? canvasSize / naturalWidth : canvasSize / naturalHeight;
   var scaledWidth = isLandscape ? canvasSize : naturalWidth * ratio;
   var scaledHeight = isLandscape ? naturalHeight * ratio : canvasSize;
@@ -32407,10 +32407,13 @@ var appendMasks = function appendMasks(canvas, selection, viewportInfo) {
       height: y2 - y1
     })
   };
-  canvas.add(masks.top);
-  canvas.add(masks.bottom);
-  canvas.add(masks.left);
-  canvas.add(masks.right);
+
+  for (var i in masks) {
+    var visible = Math.floor(masks[i].width) !== 0 && Math.floor(masks[i].height) !== 0;
+    masks[i].set('visible', visible);
+    canvas.add(masks[i]);
+  }
+
   return masks;
 };
 
@@ -32426,13 +32429,13 @@ var appendSelection = function appendSelection(canvas, printWidth, printHeight, 
 
   var selection = new fabric_1.fabric.Rect({
     opacity: 0,
-    width: selectionWidth,
-    height: selectionHeight,
-    top: top + (scaledHeight - selectionHeight) / 2,
-    left: left + (scaledWidth - selectionWidth) / 2,
+    width: selectionWidth - 2,
+    height: selectionHeight - 2,
+    top: top + (scaledHeight - selectionHeight) / 2 + 1,
+    left: left + (scaledWidth - selectionWidth) / 2 + 1,
     selectable: true,
-    // borderDashArray: [1, 2],
-    // borderColor: 'rgba(255, 255, 255, 1)',
+    borderDashArray: [1, 2],
+    borderColor: '#ffffff',
     lockMovementX: selectionWidth === scaledWidth,
     lockMovementY: selectionHeight === scaledHeight,
     lockUniScaling: true
@@ -32449,6 +32452,7 @@ var appendSelection = function appendSelection(canvas, printWidth, printHeight, 
     mtr: false
   });
   canvas.add(selection);
+  canvas.setActiveObject(selection);
   return selection;
 };
 
@@ -32508,6 +32512,10 @@ var bindSelectionMove = function bindSelectionMove(canvas, img, masks, viewportI
       width: x3 - x2,
       height: y2 - y1
     });
+
+    for (var i in masks) {
+      masks[i].set('visible', Math.floor(masks[i].width) !== 0 && Math.floor(masks[i].height) !== 0);
+    }
   });
 };
 
@@ -32599,7 +32607,7 @@ var handleFileChange = function handleFileChange(e) {
                 imgEl = _a.sent();
                 canvas = applyCanvas(500);
                 viewportInfo = utils_1.getViewportInfo(imgEl.naturalWidth, imgEl.naturalHeight, 500);
-                isLandscape = imgEl.naturalWidth > imgEl.naturalHeight;
+                isLandscape = imgEl.naturalWidth >= imgEl.naturalHeight;
                 return [4
                 /*yield*/
                 , appendImage(canvas, dataURL, viewportInfo)];
@@ -32661,7 +32669,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53282" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64383" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
