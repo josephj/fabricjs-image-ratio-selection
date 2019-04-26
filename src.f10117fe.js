@@ -31954,70 +31954,119 @@ fabric.util.object.extend(fabric.IText.prototype,
     }
   });
 })();
-},{"jsdom":"node_modules/parcel-bundler/src/builtins/_empty.js","jsdom/lib/jsdom/living/generated/utils":"node_modules/parcel-bundler/src/builtins/_empty.js","jsdom/lib/jsdom/utils":"node_modules/parcel-bundler/src/builtins/_empty.js","xmldom":"node_modules/parcel-bundler/src/builtins/_empty.js","buffer":"node_modules/buffer/index.js","process":"node_modules/process/browser.js"}],"src/utils.js":[function(require,module,exports) {
+},{"jsdom":"node_modules/parcel-bundler/src/builtins/_empty.js","jsdom/lib/jsdom/living/generated/utils":"node_modules/parcel-bundler/src/builtins/_empty.js","jsdom/lib/jsdom/utils":"node_modules/parcel-bundler/src/builtins/_empty.js","xmldom":"node_modules/parcel-bundler/src/builtins/_empty.js","buffer":"node_modules/buffer/index.js","process":"node_modules/process/browser.js"}],"src/utils.ts":[function(require,module,exports) {
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.str2ab = str2ab;
-exports.getOrientation = getOrientation;
-exports.resetOrientation = resetOrientation;
+exports.__esModule = true;
 
-function str2ab(str) {
-  var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
+exports.needSelection = function (viewportInfo, printWidth, printHeight) {
+  var scaledWidth = viewportInfo.scaledWidth,
+      scaledHeight = viewportInfo.scaledHeight;
 
-  var bufView = new Uint16Array(buf);
+  var _a = exports.getSelectionInfo(printWidth, printHeight, scaledWidth, scaledHeight),
+      selectionWidth = _a.selectionWidth,
+      selectionHeight = _a.selectionHeight;
 
-  for (var i = 0, strLen = str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
+  return Math.ceil(selectionWidth) !== Math.ceil(scaledWidth) || Math.ceil(selectionHeight) !== Math.ceil(scaledHeight);
+};
+
+exports.getViewportInfo = function (naturalWidth, naturalHeight, canvasSize) {
+  var isLandscape = naturalWidth > naturalHeight;
+  var ratio = isLandscape ? canvasSize / naturalWidth : canvasSize / naturalHeight;
+  var scaledWidth = isLandscape ? canvasSize : naturalWidth * ratio;
+  var scaledHeight = isLandscape ? naturalHeight * ratio : canvasSize;
+  var top = isLandscape ? canvasSize / 2 - scaledHeight / 2 : 0;
+  var left = isLandscape ? 0 : canvasSize / 2 - scaledWidth / 2;
+  var scaleX = scaledWidth / naturalWidth;
+  var scaleY = scaledHeight / naturalHeight;
+  return {
+    isLandscape: isLandscape,
+    ratio: ratio,
+    scaledWidth: scaledWidth,
+    scaledHeight: scaledHeight,
+    top: top,
+    left: left,
+    scaleX: scaleX,
+    scaleY: scaleY,
+    width: naturalWidth,
+    height: naturalHeight
+  };
+};
+
+exports.getSelectionInfo = function (printWidth, printHeight, scaledWidth, scaledHeight) {
+  var selectionWidth = 0;
+  var selectionHeight = 0;
+
+  if (printHeight * (scaledWidth / printWidth) <= scaledHeight) {
+    selectionWidth = scaledWidth;
+    selectionHeight = printHeight * (scaledWidth / printWidth);
+  } else {
+    selectionWidth = printWidth * (scaledHeight / printHeight);
+    selectionHeight = scaledHeight;
   }
 
-  return buf;
-}
+  return {
+    selectionWidth: selectionWidth,
+    selectionHeight: selectionHeight
+  };
+};
 
-function getOrientation(arrayBuffer) {
-  var view = new DataView(arrayBuffer);
+function getOrientation(file) {
+  return new Promise(function (resolve) {
+    var reader = new FileReader();
 
-  if (view.getUint16(0, false) != 0xffd8) {
-    return -2;
-  }
+    reader.onload = function (e) {
+      var view = new DataView(e.target.result);
 
-  var length = view.byteLength,
-      offset = 2;
-
-  while (offset < length) {
-    if (view.getUint16(offset + 2, false) <= 8) {
-      return -1;
-    }
-
-    var marker = view.getUint16(offset, false);
-    offset += 2;
-
-    if (marker == 0xffe1) {
-      if (view.getUint32(offset += 2, false) != 0x45786966) {
-        return -1;
+      if (view.getUint16(0, false) != 0xffd8) {
+        resolve(-2);
+        return;
       }
 
-      var little = view.getUint16(offset += 6, false) == 0x4949;
-      offset += view.getUint32(offset + 4, little);
-      var tags = view.getUint16(offset, little);
-      offset += 2;
+      var length = view.byteLength,
+          offset = 2;
 
-      for (var i = 0; i < tags; i++) {
-        if (view.getUint16(offset + i * 12, little) == 0x0112) {
-          return view.getUint16(offset + i * 12 + 8, little);
+      while (offset < length) {
+        if (view.getUint16(offset + 2, false) <= 8) {
+          resolve(-1);
+          return;
+        }
+
+        var marker = view.getUint16(offset, false);
+        offset += 2;
+
+        if (marker == 0xffe1) {
+          if (view.getUint32(offset += 2, false) != 0x45786966) {
+            resolve(-1);
+            return;
+          }
+
+          var little = view.getUint16(offset += 6, false) == 0x4949;
+          offset += view.getUint32(offset + 4, little);
+          var tags = view.getUint16(offset, little);
+          offset += 2;
+
+          for (var i = 0; i < tags; i++) {
+            if (view.getUint16(offset + i * 12, little) == 0x0112) {
+              resolve(view.getUint16(offset + i * 12 + 8, little));
+              return;
+            }
+          }
+        } else if ((marker & 0xff00) != 0xff00) {
+          break;
+        } else {
+          offset += view.getUint16(offset, false);
         }
       }
-    } else if ((marker & 0xff00) != 0xff00) {
-      break;
-    } else {
-      offset += view.getUint16(offset, false);
-    }
-  }
 
-  return -1;
+      resolve(-1);
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
 }
+
+exports.getOrientation = getOrientation;
 
 function resetOrientation(srcBase64, srcOrientation) {
   return new Promise(function (resolve) {
@@ -32080,6 +32129,8 @@ function resetOrientation(srcBase64, srcOrientation) {
     img.src = srcBase64;
   });
 }
+
+exports.resetOrientation = resetOrientation;
 },{}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
@@ -32259,49 +32310,9 @@ var applyCanvas = function applyCanvas(canvasSize) {
   document.querySelector('#container').appendChild(canvasEl);
   return new Canvas(canvasEl, {
     backgroundColor: '#ccc',
-    selection: false
+    selection: false,
+    defaultCursor: 'default'
   });
-};
-
-var getViewportInfo = function getViewportInfo(naturalWidth, naturalHeight, canvasSize) {
-  var isLandscape = naturalWidth > naturalHeight;
-  var ratio = isLandscape ? canvasSize / naturalWidth : canvasSize / naturalHeight;
-  var scaledWidth = isLandscape ? canvasSize : naturalWidth * ratio;
-  var scaledHeight = isLandscape ? naturalHeight * ratio : canvasSize;
-  var top = isLandscape ? canvasSize / 2 - scaledHeight / 2 : 0;
-  var left = isLandscape ? 0 : canvasSize / 2 - scaledWidth / 2;
-  var scaleX = scaledWidth / naturalWidth;
-  var scaleY = scaledHeight / naturalHeight;
-  return {
-    isLandscape: isLandscape,
-    ratio: ratio,
-    scaledWidth: scaledWidth,
-    scaledHeight: scaledHeight,
-    top: top,
-    left: left,
-    scaleX: scaleX,
-    scaleY: scaleY,
-    width: naturalWidth,
-    height: naturalHeight
-  };
-};
-
-var getSelectionInfo = function getSelectionInfo(printWidth, printHeight, scaledWidth, scaledHeight) {
-  var selectionWidth = 0;
-  var selectionHeight = 0;
-
-  if (printHeight * (scaledWidth / printWidth) <= scaledHeight) {
-    selectionWidth = scaledWidth;
-    selectionHeight = printHeight * (scaledWidth / printWidth);
-  } else {
-    selectionWidth = printWidth * (scaledHeight / printHeight);
-    selectionHeight = scaledHeight;
-  }
-
-  return {
-    selectionWidth: selectionWidth,
-    selectionHeight: selectionHeight
-  };
 };
 
 var appendImage = function appendImage(canvas, dataURL, viewportInfo) {
@@ -32321,44 +32332,13 @@ var appendImage = function appendImage(canvas, dataURL, viewportInfo) {
         scaleX: scaleX,
         scaleY: scaleY,
         objectCaching: false,
-        selectable: false
+        selectable: false,
+        moveCursor: 'default'
       });
       canvas.add(img);
       resolve(img);
     });
   });
-};
-
-var appendMask = function appendMask(canvas, viewportInfo) {
-  var scaledWidth = viewportInfo.scaledWidth,
-      scaledHeight = viewportInfo.scaledHeight,
-      top = viewportInfo.top,
-      left = viewportInfo.left;
-  var mask = new fabric_1.fabric.Rect({
-    fill: '#000000',
-    opacity: 0.5,
-    width: scaledWidth,
-    height: scaledHeight,
-    top: top,
-    left: left,
-    selectable: false,
-    lockMovementX: true,
-    lockMovementY: true,
-    moveCursor: 'default'
-  });
-  mask.setControlsVisibility({
-    bl: false,
-    br: false,
-    mb: false,
-    ml: false,
-    mr: false,
-    mt: false,
-    tl: false,
-    tr: false,
-    mtr: false
-  });
-  canvas.add(mask);
-  return mask;
 };
 
 var createMask = function createMask(options) {
@@ -32434,37 +32414,25 @@ var appendMasks = function appendMasks(canvas, selection, viewportInfo) {
   return masks;
 };
 
-var needSelection = function needSelection(viewportInfo, printWidth, printHeight) {
-  var scaledWidth = viewportInfo.scaledWidth,
-      scaledHeight = viewportInfo.scaledHeight;
-
-  var _a = getSelectionInfo(printWidth, printHeight, scaledWidth, scaledHeight),
-      selectionWidth = _a.selectionWidth,
-      selectionHeight = _a.selectionHeight;
-
-  return selectionWidth !== scaledWidth || selectionHeight !== scaledHeight;
-};
-
 var appendSelection = function appendSelection(canvas, printWidth, printHeight, viewportInfo) {
   var top = viewportInfo.top,
       left = viewportInfo.left,
       scaledWidth = viewportInfo.scaledWidth,
       scaledHeight = viewportInfo.scaledHeight;
 
-  var _a = getSelectionInfo(printWidth, printHeight, scaledWidth, scaledHeight),
+  var _a = utils_1.getSelectionInfo(printWidth, printHeight, scaledWidth, scaledHeight),
       selectionWidth = _a.selectionWidth,
       selectionHeight = _a.selectionHeight;
 
   var selection = new fabric_1.fabric.Rect({
-    fill: 'white',
-    opacity: 0.3,
+    opacity: 0,
     width: selectionWidth,
     height: selectionHeight,
     top: top + (scaledHeight - selectionHeight) / 2,
     left: left + (scaledWidth - selectionWidth) / 2,
     selectable: true,
-    borderDashArray: [1, 2],
-    borderColor: 'rgba(255, 255, 255, 1)',
+    // borderDashArray: [1, 2],
+    // borderColor: 'rgba(255, 255, 255, 1)',
     lockMovementX: selectionWidth === scaledWidth,
     lockMovementY: selectionHeight === scaledHeight,
     lockUniScaling: true
@@ -32592,7 +32560,7 @@ var handleFileChange = function handleFileChange(e) {
 
       Array.from(input.files).forEach(function (file) {
         return __awaiter(_this, void 0, void 0, function () {
-          var itemEl, dataURL, orientation, newDataURL, imgEl, canvas, viewportInfo, img, sizeEl, printSize, printWidth, printHeight, selection, masks;
+          var itemEl, dataURL, orientation, imgEl, canvas, viewportInfo, isLandscape, img, sizeEl, printSize, printWidth, printHeight, selection, masks;
           return __generator(this, function (_a) {
             switch (_a.label) {
               case 0:
@@ -32604,33 +32572,39 @@ var handleFileChange = function handleFileChange(e) {
 
               case 1:
                 dataURL = _a.sent();
-                orientation = utils_1.getOrientation(utils_1.str2ab(dataURL));
+                return [4
+                /*yield*/
+                , utils_1.getOrientation(file)];
+
+              case 2:
+                orientation = _a.sent();
                 return [4
                 /*yield*/
                 , utils_1.resetOrientation(dataURL, orientation)];
 
-              case 2:
-                newDataURL = _a.sent();
-                return [4
-                /*yield*/
-                , loadImage(newDataURL)];
-
               case 3:
-                imgEl = _a.sent();
-                canvas = applyCanvas(500);
-                viewportInfo = getViewportInfo(imgEl.naturalWidth, imgEl.naturalHeight, 500);
+                dataURL = _a.sent();
                 return [4
                 /*yield*/
-                , appendImage(canvas, newDataURL, viewportInfo)];
+                , loadImage(dataURL)];
 
               case 4:
+                imgEl = _a.sent();
+                canvas = applyCanvas(500);
+                viewportInfo = utils_1.getViewportInfo(imgEl.naturalWidth, imgEl.naturalHeight, 500);
+                isLandscape = imgEl.naturalWidth > imgEl.naturalHeight;
+                return [4
+                /*yield*/
+                , appendImage(canvas, dataURL, viewportInfo)];
+
+              case 5:
                 img = _a.sent();
                 sizeEl = document.getElementById('size');
                 printSize = sizeEl.options[sizeEl.selectedIndex].value.split(',');
-                printWidth = parseInt(printSize[0], 10);
-                printHeight = parseInt(printSize[1], 10);
+                printWidth = isLandscape ? parseInt(printSize[1], 10) : parseInt(printSize[0], 10);
+                printHeight = isLandscape ? parseInt(printSize[0], 10) : parseInt(printSize[1], 10);
 
-                if (needSelection(viewportInfo, printWidth, printHeight)) {
+                if (utils_1.needSelection(viewportInfo, printWidth, printHeight)) {
                   selection = appendSelection(canvas, printWidth, printHeight, viewportInfo);
                   masks = appendMasks(canvas, selection, viewportInfo);
                   bindSelectionMove(canvas, img, masks, viewportInfo);
@@ -32652,7 +32626,7 @@ var handleFileChange = function handleFileChange(e) {
 };
 
 document.querySelector('#file').addEventListener('change', handleFileChange);
-},{"fabric":"node_modules/fabric/dist/fabric.js","./utils":"src/utils.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"fabric":"node_modules/fabric/dist/fabric.js","./utils":"src/utils.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -32680,7 +32654,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62226" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56507" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
