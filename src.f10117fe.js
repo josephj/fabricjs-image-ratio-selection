@@ -32545,7 +32545,7 @@ var loadImage = function loadImage(dataURL) {
 
 var handleFileChange = function handleFileChange(e) {
   return __awaiter(_this, void 0, void 0, function () {
-    var input;
+    var input, orientationEl;
 
     var _this = this;
 
@@ -32558,6 +32558,7 @@ var handleFileChange = function handleFileChange(e) {
         ];
       }
 
+      orientationEl = document.getElementById('orientation');
       Array.from(input.files).forEach(function (file) {
         return __awaiter(_this, void 0, void 0, function () {
           var itemEl, dataURL, orientation, imgEl, canvas, viewportInfo, isLandscape, img, sizeEl, printSize, printWidth, printHeight, selection, masks;
@@ -32572,6 +32573,9 @@ var handleFileChange = function handleFileChange(e) {
 
               case 1:
                 dataURL = _a.sent();
+                if (!orientationEl.checked) return [3
+                /*break*/
+                , 4];
                 return [4
                 /*yield*/
                 , utils_1.getOrientation(file)];
@@ -32584,11 +32588,14 @@ var handleFileChange = function handleFileChange(e) {
 
               case 3:
                 dataURL = _a.sent();
+                _a.label = 4;
+
+              case 4:
                 return [4
                 /*yield*/
                 , loadImage(dataURL)];
 
-              case 4:
+              case 5:
                 imgEl = _a.sent();
                 canvas = applyCanvas(500);
                 viewportInfo = utils_1.getViewportInfo(imgEl.naturalWidth, imgEl.naturalHeight, 500);
@@ -32597,7 +32604,7 @@ var handleFileChange = function handleFileChange(e) {
                 /*yield*/
                 , appendImage(canvas, dataURL, viewportInfo)];
 
-              case 5:
+              case 6:
                 img = _a.sent();
                 sizeEl = document.getElementById('size');
                 printSize = sizeEl.options[sizeEl.selectedIndex].value.split(',');
@@ -32654,7 +32661,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56507" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53282" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
