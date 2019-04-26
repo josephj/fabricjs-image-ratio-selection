@@ -86,10 +86,11 @@ const appendMasks = (canvas: fabric.Canvas, selection: fabric.Rect, viewportInfo
     right: createMask({ top: y1, left: x2, width: x3 - x2, height: y2 - y1 }),
   };
 
-  canvas.add(masks.top);
-  canvas.add(masks.bottom);
-  canvas.add(masks.left);
-  canvas.add(masks.right);
+  for (var i in masks) {
+    const visible = Math.floor(masks[i].width) !== 0 && Math.floor(masks[i].height) !== 0;
+    masks[i].set('visible', visible);
+    canvas.add(masks[i]);
+  }
 
   return masks;
 };
@@ -109,13 +110,13 @@ const appendSelection = (
   );
   const selection = new fabric.Rect({
     opacity: 0,
-    width: selectionWidth,
-    height: selectionHeight,
-    top: top + (scaledHeight - selectionHeight) / 2,
-    left: left + (scaledWidth - selectionWidth) / 2,
+    width: selectionWidth - 2,
+    height: selectionHeight - 2,
+    top: top + (scaledHeight - selectionHeight) / 2 + 1,
+    left: left + (scaledWidth - selectionWidth) / 2 + 1,
     selectable: true,
-    // borderDashArray: [1, 2],
-    // borderColor: 'rgba(255, 255, 255, 1)',
+    borderDashArray: [1, 2],
+    borderColor: '#ffffff',
     lockMovementX: selectionWidth === scaledWidth,
     lockMovementY: selectionHeight === scaledHeight,
     lockUniScaling: true,
@@ -132,6 +133,7 @@ const appendSelection = (
     mtr: false,
   });
   canvas.add(selection);
+  canvas.setActiveObject(selection);
   return selection;
 };
 
@@ -181,6 +183,13 @@ const bindSelectionMove = (
     masks.bottom.set({ top: y2, left: x0, width: x3 - x0, height: y3 - y2 });
     masks.left.set({ top: y1, left: x0, width: x1 - x0, height: y2 - y1 });
     masks.right.set({ top: y1, left: x2, width: x3 - x2, height: y2 - y1 });
+
+    for (var i in masks) {
+      masks[i].set(
+        'visible',
+        Math.floor(masks[i].width) !== 0 && Math.floor(masks[i].height) !== 0
+      );
+    }
   });
 };
 
@@ -227,7 +236,7 @@ const handleFileChange = async (e: Event) => {
 
     const canvas = applyCanvas(500);
     const viewportInfo = getViewportInfo(imgEl.naturalWidth, imgEl.naturalHeight, 500);
-    const isLandscape = imgEl.naturalWidth > imgEl.naturalHeight;
+    const isLandscape = imgEl.naturalWidth >= imgEl.naturalHeight;
     const img: fabric.Image = <fabric.Image>await appendImage(canvas, dataURL, viewportInfo);
 
     const sizeEl: HTMLSelectElement = <HTMLSelectElement>document.getElementById('size');

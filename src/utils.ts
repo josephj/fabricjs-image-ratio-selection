@@ -23,7 +23,7 @@ export const getViewportInfo = (
   naturalHeight: number,
   canvasSize: number
 ): ViewportInfo => {
-  const isLandscape: boolean = naturalWidth > naturalHeight;
+  const isLandscape: boolean = naturalWidth >= naturalHeight;
   const ratio: number = isLandscape ? canvasSize / naturalWidth : canvasSize / naturalHeight;
   const scaledWidth = isLandscape ? canvasSize : naturalWidth * ratio;
   const scaledHeight = isLandscape ? naturalHeight * ratio : canvasSize;
